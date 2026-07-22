@@ -1,6 +1,7 @@
 import os
 import json
 import boto3
+from botocore.config import Config
 from datetime import datetime, timezone, timedelta
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -16,9 +17,24 @@ AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 KNOWLEDGE_BASE_ID = os.environ.get('KNOWLEDGE_BASE_ID', '58SGJUBGOB')
 VPC_ID = os.environ.get('VPC_ID', 'vpc-0a4a1cd7d85b9bfb1')
-CLAUDE_MODEL = 'anthropic.claude-3-haiku-20240307-v1:0'
+CLAUDE_MODEL = 'us.anthropic.claude-sonnet-4-5-20250929-v1:0'
+
+bedrock_config = Config(
+    connect_timeout=10,
+    read_timeout=200,
+    retries={'max_attempts': 2, 'mode': 'standard'}
+)
+
 
 def get_client(service):
+    if service in ('bedrock-runtime', 'bedrock-agent-runtime'):
+        return boto3.client(
+            service,
+            region_name=AWS_REGION,
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            config=bedrock_config
+        )
     return boto3.client(
         service,
         region_name=AWS_REGION,
@@ -31,7 +47,7 @@ def call_claude(prompt):
     client = get_client('bedrock-runtime')
     body = json.dumps({
         'anthropic_version': 'bedrock-2023-05-31',
-        'max_tokens': 2000,
+        'max_tokens': 5000,
         'temperature': 0,
         'messages': [{'role': 'user', 'content': prompt}]
     })
