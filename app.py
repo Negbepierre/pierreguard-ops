@@ -280,11 +280,12 @@ def ops_scan():
         print('Analysis complete')
 
         threat_level = 'LOW'
-        if 'CRITICAL' in report.upper()[:200]:
+        summary_section = report.upper()[:600]
+        if 'CRITICAL' in summary_section:
             threat_level = 'CRITICAL'
-        elif 'HIGH' in report.upper()[:200]:
+        elif 'HIGH' in summary_section:
             threat_level = 'HIGH'
-        elif 'MEDIUM' in report.upper()[:200]:
+        elif 'MEDIUM' in summary_section:
             threat_level = 'MEDIUM'
 
         return jsonify({
